@@ -1,0 +1,434 @@
+@import 'tailwindcss';
+
+@import 'tw-animate-css';
+
+@variant dark (&:where(.dark, .dark *));
+
+:root {
+	--radius: 0.625rem;
+
+	/* Core background / foreground tuned to the Tailwind classes used in the app */
+	--background: #ffffff; /* matches light backgrounds used with bg-white / bg-white/30 */
+	--foreground: #0a0a0a; /* matches in-app text color (text-off-white inverse) */
+
+	/* Cards / popovers follow the semi-transparent styles used across the app */
+	--card: rgba(255, 255, 255, 0.6);
+	--card-foreground: #0a0a0a;
+	--popover: rgba(255, 255, 255, 0.9);
+	--popover-foreground: #0a0a0a;
+
+	/* Primary / secondary / accent reflect the purple/cyan palette used by Tailwind classes in the app */
+	--primary: #a855f7; /* purple-500 (used for strong accents / borders) */
+	--primary-foreground: #fafafa;
+	--secondary: #c084fc; /* purple-300 (lighter purple used for highlights) */
+	--secondary-foreground: #a855f7;
+	--muted: #f3f4f6; /* gray-100 for muted backgrounds */
+	--muted-foreground: #6b7280; /* gray-500 for muted text */
+	--accent: #c084fc;
+	--accent-foreground: #a855f7;
+
+	/* Destructive / borders / inputs / ring */
+	--destructive: #ef4444; /* red-500 */
+	--border: rgba(168, 85, 247, 0.12); /* subtle purple border */
+	--input: rgba(0, 0, 0, 0.04);
+	--ring: rgba(168, 85, 247, 0.36);
+
+	/* Chart palette (picked to align with the cyan/purple/green/orange accents used in the UI) */
+	--chart-1: #16a34a; /* green-600 */
+	--chart-2: #06b6d4; /* cyan-500 (matches rgba(6,182,212)) */
+	--chart-3: #7c3aed; /* purple-500 variant */
+	--chart-4: #f59e0b; /* amber-500 */
+	--chart-5: #f97316; /* orange-500 */
+
+	/* Sidebar specific */
+	--sidebar: rgba(255, 255, 255, 0.98);
+	--sidebar-foreground: #0a0a0a;
+	--sidebar-primary: #a855f7;
+	--sidebar-primary-foreground: #fafafa;
+	--sidebar-accent: #c084fc;
+	--sidebar-accent-foreground: #a855f7;
+	--sidebar-border: rgba(168, 85, 247, 0.12);
+	--sidebar-ring: rgba(168, 85, 247, 0.36);
+}
+
+.dark {
+	/* Dark theme variables aligned with Tailwind dark utilities used in the codebase */
+	--background: #0b1220; /* deep dark background used with dark:bg-black/40 etc. */
+	--foreground: #c3c3c3; /* matches .dark text color used across components */
+	--card: rgba(0, 0, 0, 0.7);
+	--card-foreground: #c3c3c3;
+	--popover: rgba(0, 0, 0, 0.8);
+	--popover-foreground: #c3c3c3;
+
+	/* Purple/cyan accents tuned for dark background */
+	--primary: #8b5cf6; /* brighter purple for dark surfaces */
+	--primary-foreground: #fafafa;
+	--secondary: #6d28d9;
+	--secondary-foreground: #fafafa;
+	--muted: #1f2937; /* gray-800 */
+	--muted-foreground: #94a3b8; /* gray-400 */
+	--accent: #6d28d9;
+	--accent-foreground: #fafafa;
+
+	--destructive: #ef4444;
+	--border: rgba(255, 255, 255, 0.08);
+	--input: rgba(255, 255, 255, 0.06);
+	--ring: rgba(168, 85, 247, 0.28);
+
+	/* Chart palette for dark mode */
+	--chart-1: #4ade80;
+	--chart-2: #22d3ee;
+	--chart-3: #f472b6;
+	--chart-4: #f59e0b;
+	--chart-5: #f97316;
+
+	/* Sidebar */
+	--sidebar: rgba(9, 10, 11, 0.92);
+	--sidebar-foreground: #c3c3c3;
+	--sidebar-primary: #7c3aed;
+	--sidebar-primary-foreground: #fafafa;
+	--sidebar-accent: #6d28d9;
+	--sidebar-accent-foreground: #fafafa;
+	--sidebar-border: rgba(255, 255, 255, 0.08);
+	--sidebar-ring: rgba(168, 85, 247, 0.28);
+}
+
+@theme inline {
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-destructive: var(--destructive);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+	--color-chart-1: var(--chart-1);
+	--color-chart-2: var(--chart-2);
+	--color-chart-3: var(--chart-3);
+	--color-chart-4: var(--chart-4);
+	--color-chart-5: var(--chart-5);
+	--color-sidebar: var(--sidebar);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+	}
+	body {
+		@apply bg-background text-foreground;
+	}
+}
+
+/* Custom animations for hero section */
+@keyframes pulse-slow {
+	0% {
+		opacity: 0.4;
+	}
+	50% {
+		opacity: 0.6;
+	}
+	100% {
+		opacity: 0.4;
+	}
+}
+
+@keyframes pulse-glow {
+	0% {
+		opacity: 0.7;
+		text-shadow:
+			0 0 10px rgba(6, 182, 212, 0.8),
+			0 0 20px rgba(6, 182, 212, 0.5),
+			0 0 40px rgba(6, 182, 212, 0.2);
+	}
+	50% {
+		opacity: 1;
+		text-shadow:
+			0 0 15px rgba(6, 182, 212, 1),
+			0 0 30px rgba(6, 182, 212, 0.8),
+			0 0 60px rgba(6, 182, 212, 0.4);
+	}
+	100% {
+		opacity: 0.7;
+		text-shadow:
+			0 0 10px rgba(6, 182, 212, 0.8),
+			0 0 20px rgba(6, 182, 212, 0.5),
+			0 0 40px rgba(6, 182, 212, 0.2);
+	}
+}
+
+@keyframes slide-up-fade {
+	from {
+		opacity: 0;
+		transform: translateY(40px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes slide-in-right {
+	from {
+		opacity: 0;
+		transform: translateX(60px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes slide-in-right-once {
+	from {
+		opacity: 0;
+		transform: translateX(60px);
+	}
+	to {
+		opacity: 0.7;
+		transform: translateX(0);
+	}
+}
+
+@keyframes center-fade-in-out {
+	0% {
+		opacity: 0;
+		transform: scale(0.9);
+	}
+	20% {
+		opacity: 1;
+		transform: scale(1);
+	}
+	80% {
+		opacity: 1;
+		transform: scale(1);
+	}
+	100% {
+		opacity: 0;
+		transform: scale(1.1);
+	}
+}
+
+@keyframes center-fade-in-out-glow {
+	0% {
+		opacity: 0;
+		transform: scale(0.9);
+		text-shadow:
+			0 0 10px rgba(6, 182, 212, 0.8),
+			0 0 20px rgba(6, 182, 212, 0.5),
+			0 0 40px rgba(6, 182, 212, 0.2);
+	}
+	20% {
+		opacity: 1;
+		transform: scale(1);
+		text-shadow:
+			0 0 15px rgba(6, 182, 212, 1),
+			0 0 30px rgba(6, 182, 212, 0.8),
+			0 0 60px rgba(6, 182, 212, 0.4);
+	}
+	80% {
+		opacity: 1;
+		transform: scale(1);
+		text-shadow:
+			0 0 15px rgba(6, 182, 212, 1),
+			0 0 30px rgba(6, 182, 212, 0.8),
+			0 0 60px rgba(6, 182, 212, 0.4);
+	}
+	100% {
+		opacity: 0;
+		transform: scale(1.1);
+		text-shadow:
+			0 0 20px rgba(6, 182, 212, 1),
+			0 0 40px rgba(6, 182, 212, 0.8),
+			0 0 80px rgba(6, 182, 212, 0.6);
+	}
+}
+
+.animate-pulse-slow {
+	animation: pulse-slow 4s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+	animation: pulse-glow 4s ease-in-out infinite;
+}
+
+.animate-slide-up-fade {
+	animation: slide-up-fade 1.2s ease-out forwards;
+}
+
+.animate-slide-in-right {
+	animation: slide-in-right 1.5s ease-out forwards;
+	opacity: 0;
+}
+
+.animate-slide-in-right-once {
+	animation: slide-in-right-once 1.5s ease-out forwards;
+	opacity: 0;
+}
+
+.animate-glow-after-slide {
+	animation:
+		slide-in-right-once 1.5s ease-out forwards,
+		pulse-glow 4s ease-in-out 1.5s infinite;
+	opacity: 0;
+}
+
+.animate-center-fade {
+	animation: center-fade-in-out 1s ease-in-out forwards;
+}
+
+.animate-center-fade-glow {
+	animation: center-fade-in-out-glow 1s ease-in-out forwards;
+}
+
+.animation-delay-300 {
+	animation-delay: 0.3s;
+}
+
+.animation-delay-600 {
+	animation-delay: 0.6s;
+}
+
+.animation-delay-900 {
+	animation-delay: 0.9s;
+}
+
+.animation-delay-2000 {
+	animation-delay: 2000ms;
+}
+
+/* Text utilities - using Tailwind dark mode */
+
+/* Card utilities for cyberpunk styling */
+.card-cyberpunk {
+	border-radius: 1rem;
+	backdrop-filter: blur(8px);
+	background-color: rgba(255, 255, 255, 0.6);
+	border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.dark .card-cyberpunk {
+	background-color: rgba(0, 0, 0, 0.7);
+	border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.card-cyberpunk-cyan {
+	border-radius: 1rem;
+	backdrop-filter: blur(8px);
+	background-color: rgba(255, 255, 255, 0.6);
+	border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.dark .card-cyberpunk-cyan {
+	background-color: rgba(0, 0, 0, 0.7);
+	border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.card-cyberpunk-green {
+	border-radius: 1rem;
+	backdrop-filter: blur(8px);
+	background-color: rgba(255, 255, 255, 0.6);
+	border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.dark .card-cyberpunk-green {
+	background-color: rgba(0, 0, 0, 0.7);
+	border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+/* Text utilities */
+.text-off-white {
+	color: #0a0a0a;
+}
+
+.dark .text-off-white {
+	color: #c3c3c3;
+}
+
+.text-adaptive-gray {
+	color: #404040;
+}
+
+.dark .text-adaptive-gray {
+	color: #d1d5db;
+}
+
+/* Active navigation link styling - always purple regardless of theme */
+.nav-link-active {
+	color: rgb(192, 132, 252); /* purple-400 */
+}
+
+/* 
+ * Global white text color - easily changeable
+ * To change the white text color across the entire app, simply update the --text-white variable below
+ * All instances of text-white will automatically use this color
+ */
+:root {
+	--text-white: #fafafa; /* Change this value to update all white text globally */
+}
+
+.text-primary-white {
+	color: var(--text-white);
+}
+
+/* Override Tailwind's text-white to use our custom color */
+.text-white {
+	color: var(--text-white) !important;
+}
+
+/* Hero section font family - cyberpunk themed */
+.hero-text {
+	font-family:
+		'Orbitron',
+		-apple-system,
+		BlinkMacSystemFont,
+		'Segoe UI',
+		sans-serif;
+	letter-spacing: 0.02em;
+}
+
+/* Force select item text colors */
+[data-slot='select-item'] {
+	color: rgb(17 24 39) !important; /* text-gray-900 */
+}
+
+.dark [data-slot='select-item'] {
+	color: #c3c3c3 !important; /* text-off-white */
+}
+
+.dark [data-slot='select-item'][data-highlighted] {
+	color: #d8b4fe !important; /* text-purple-300 */
+}
+
+/* Force profile search dropdown text colors */
+[role='listbox'] button {
+	color: rgb(17 24 39) !important; /* text-gray-900 */
+}
+
+.dark [role='listbox'] button {
+	color: #c3c3c3 !important; /* text-off-white */
+}
+
+.dark [role='listbox'] button:hover {
+	color: #d8b4fe !important; /* text-purple-300 */
+}

@@ -1,0 +1,605 @@
+---
+alwaysApply: true
+---
+
+# Coding Rules for AtoB Project
+
+You are an expert in Svelte 5, SvelteKit, TypeScript, XState, Nostr protocol, TailwindCSS, and Bun.
+
+## Core Principles
+
+- Write concise, technical responses with accurate examples
+- Prioritize type safety and leverage TypeScript extensively
+- Follow functional and declarative programming patterns
+- Prefer composition over inheritance
+- Use early returns for error handling (guard clauses)
+- Minimize code duplication through modularization
+- Write self-documenting code with clear naming conventions
+
+## TypeScript Best Practices
+
+### Type Safety
+- Enable strict mode in `tsconfig.json`
+- Avoid `any`; use `unknown` when type is truly unknown
+- Use `const` assertions for immutable values
+- Leverage type inference; only add explicit types when needed for clarity
+- Use discriminated unions for complex state modeling
+- Prefer interfaces for object shapes, types for unions/intersections
+
+### Naming Conventions
+- Use PascalCase for types, interfaces, and classes
+- Use camelCase for variables, functions, and methods
+- Use SCREAMING_SNAKE_CASE for constants
+- Prefix interfaces with descriptive names (no `I` prefix)
+- Use descriptive names that reveal intent
+
+```typescript
+// Good
+interface UserProfile {
+  displayName: string;
+  publicKey: string;
+}
+
+// Avoid
+interface IUser {
+  name: string;
+  key: string;
+}
+```
+
+## Svelte 5 Best Practices
+
+### Runes and Reactivity
+- Use `$state()` for reactive state within components
+- Use `$derived()` for computed values that depend on reactive state
+- Use `$effect()` for side effects, but minimize usage
+- Use `$props()` to declare component props with TypeScript
+- Avoid `$:` reactive statements in Svelte 5; use runes instead
+
+```svelte
+<script lang="ts">
+  let count = $state(0);
+  let doubled = $derived(count * 2);
+  
+  $effect(() => {
+    console.log(`Count changed to ${count}`);
+    return () => {
+      // Cleanup
+    };
+  });
+</script>
+```
+
+### Component Structure
+- Place `<script>` first, then template, then `<style>` last
+- Use TypeScript in all script tags: `<script lang="ts">`
+- Export props using `$props()` rune
+- Keep components focused and single-purpose
+- Extract reusable logic into composable functions (`.svelte.ts` files)
+
+```svelte
+<script lang="ts">
+  interface Props {
+    title: string;
+    count?: number;
+  }
+  
+  let { title, count = 0 }: Props = $props();
+</script>
+
+<div>
+  <h1>{title}</h1>
+  <p>Count: {count}</p>
+</div>
+
+<style>
+  /* Component styles */
+</style>
+```
+
+### Svelte.ts Files
+- Use `.svelte.ts` for shared reactive state and logic
+- Export reactive state as objects with getters/setters
+- Prefix reactive state variables with `$` in naming when appropriate
+
+```typescript
+// store.svelte.ts
+export const createCounter = () => {
+  let count = $state(0);
+  
+  return {
+    get count() { return count; },
+    increment: () => count++,
+    reset: () => count = 0
+  };
+};
+```
+
+### Event Handling
+- Use inline event handlers for simple logic
+- Extract complex handlers into functions
+- Use event delegation for list items when appropriate
+
+### Conditional Rendering
+- Use `{#if}` blocks for conditional content
+- Use `{#each}` with keyed blocks for lists
+- Always provide a key in `{#each}` blocks for lists
+
+```svelte
+{#each items as item (item.id)}
+  <div>{item.name}</div>
+{/each}
+```
+
+## SvelteKit Best Practices
+
+### File-Based Routing
+- Follow SvelteKit's file-based routing conventions
+- Use `+page.svelte` for routes
+- Use `+layout.svelte` for shared layouts
+- Use `+page.ts` for data loading
+- Use `+page.server.ts` for server-side logic
+
+### Data Loading
+- Load data in `+page.ts` or `+page.server.ts`
+- Use SvelteKit's `load` function for data dependencies
+- Implement proper error handling in loaders
+- Return properly typed data from load functions
+
+```typescript
+// +page.ts
+export const load = async ({ params }) => {
+  const data = await fetchData(params.id);
+  
+  if (!data) {
+    throw error(404, 'Not found');
+  }
+  
+  return { data };
+};
+```
+
+### Form Actions
+- Use form actions for mutations
+- Implement progressive enhancement
+- Validate data on both client and server
+- Return proper error messages from actions
+
+## XState Best Practices
+
+### State Machine Design
+- Model explicit states that represent business logic
+- Use TypeScript for state machine types
+- Define clear events with typed payloads
+- Use guards for conditional transitions
+- Use actions for side effects
+- Keep machines pure; inject services
+
+```typescript
+import { setup, assign } from 'xstate';
+
+const machine = setup({
+  types: {
+    context: {} as { count: number },
+    events: {} as 
+      | { type: 'INCREMENT' }
+      | { type: 'DECREMENT' }
+  },
+  guards: {
+    isPositive: ({ context }) => context.count > 0
+  }
+}).createMachine({
+  id: 'counter',
+  initial: 'active',
+  context: { count: 0 },
+  states: {
+    active: {
+      on: {
+        INCREMENT: {
+          actions: assign({ count: ({ context }) => context.count + 1 })
+        },
+        DECREMENT: {
+          guard: 'isPositive',
+          actions: assign({ count: ({ context }) => context.count - 1 })
+        }
+      }
+    }
+  }
+});
+```
+
+### State Machine Organization
+- Create separate files for complex machines
+- Export typed actors and snapshots
+- Use machine factories for parameterized machines
+- Document states and transitions clearly
+
+### Integration with Svelte
+- Store machine state in reactive Svelte stores
+- Subscribe to state changes in effects
+- Send events through wrapper functions
+- Expose minimal API surface to components
+
+## Nostr Protocol Best Practices
+
+### Event Handling
+- Validate all events using schemas (Zod)
+- Use proper NIPs for event kinds
+- Include appropriate tags for discoverability
+- Sign events securely
+
+```typescript
+import { z } from 'zod';
+
+const nostrEventSchema = z.object({
+  id: z.string(),
+  pubkey: z.string(),
+  created_at: z.number(),
+  kind: z.number(),
+  tags: z.array(z.array(z.string())),
+  content: z.string(),
+  sig: z.string()
+});
+```
+
+### Relay Management
+- Handle relay connection failures gracefully
+- Implement retry logic with exponential backoff
+- Use multiple relays for redundancy
+- Subscribe to specific event kinds with filters
+- Clean up subscriptions properly
+
+### Key Management
+- Never expose private keys directly
+- Use NIP-07 (window.nostr) when available
+- Implement proper key encryption for storage
+- Validate public keys before use
+
+### Event Queries
+- Use specific filters to minimize data transfer
+- Implement pagination for large result sets
+- Cache events appropriately
+- Handle missing or deleted events
+
+## TailwindCSS Best Practices
+
+### Utility Classes
+- Use Tailwind utility classes directly in templates
+- Avoid creating custom CSS when utilities exist
+- Use `@apply` sparingly in component styles
+- Leverage Tailwind's design tokens (colors, spacing, etc.)
+
+### Responsive Design
+- Mobile-first approach (default to mobile, use breakpoints for larger)
+- Use responsive utilities: `md:`, `lg:`, `xl:`
+- Test at multiple breakpoints
+
+```svelte
+<div class="p-4 md:p-6 lg:p-8">
+  <h1 class="text-xl md:text-2xl lg:text-3xl">
+    Responsive Title
+  </h1>
+</div>
+```
+
+### Component Composition
+- Build reusable UI components with consistent styling
+- Use `class` prop for component customization
+- Leverage `tailwind-merge` for class conflicts
+- Use `tailwind-variants` for component variants
+
+## Error Handling
+
+### Defensive Programming
+- Validate inputs at boundaries (API, user input, external data)
+- Use guard clauses for early returns
+- Provide meaningful error messages
+- Log errors with context
+
+```typescript
+function processDelivery(delivery: unknown) {
+  // Guard clauses
+  if (!delivery) {
+    throw new Error('Delivery is required');
+  }
+  
+  const validated = deliverySchema.safeParse(delivery);
+  if (!validated.success) {
+    console.error('Validation failed:', validated.error);
+    throw new Error('Invalid delivery data');
+  }
+  
+  // Happy path
+  return validated.data;
+}
+```
+
+### Error Boundaries
+- Implement error boundaries for component isolation
+- Provide fallback UI for errors
+- Log errors for debugging
+
+### User-Facing Errors
+- Show user-friendly error messages
+- Provide actionable feedback
+- Avoid exposing technical details
+
+## Testing Considerations
+
+### Testable Code
+- Write pure functions when possible
+- Use dependency injection for external services
+- Separate business logic from UI
+- Mock external dependencies (relays, APIs)
+
+### Test Coverage
+- Unit test business logic and utilities
+- Integration test state machines
+- E2E test critical user flows
+- Test error scenarios
+
+## Performance Optimization
+
+### Bundle Size
+- Use dynamic imports for large dependencies
+- Tree-shake unused code
+- Lazy load routes and components
+- Analyze bundle with Vite's build tools
+
+### Runtime Performance
+- Minimize reactive computations
+- Use keys in lists for efficient updates
+- Avoid unnecessary re-renders
+- Profile and measure before optimizing
+
+### Network Performance
+- Batch Nostr queries when possible
+- Implement pagination for large datasets
+- Cache data appropriately
+- Use service workers for offline capability
+
+## Code Organization
+
+### Monorepo Structure
+- Keep shared code in `packages/lib`
+- Keep UI code in `packages/web`
+- Build `@atob/lib` before using in web package
+- Use workspace protocol for internal dependencies
+
+### File Organization
+```
+packages/
+├── lib/
+│   ├── src/
+│   │   ├── machines/     # XState machines
+│   │   ├── nostr/        # Nostr utilities
+│   │   └── protocol.ts   # Protocol definitions
+│   └── index.ts          # Public API
+└── web/
+    └── src/
+        ├── lib/
+        │   ├── components/      # Svelte components
+        │   ├── models/          # Data models
+        │   ├── services/        # Business logic
+        │   ├── stores/          # Reactive stores
+        │   └── utils.ts         # Utilities
+        └── routes/              # SvelteKit routes
+```
+
+### Import Organization
+```typescript
+// 1. External dependencies
+import { derived } from 'svelte/store';
+import { createMachine } from 'xstate';
+
+// 2. Internal packages
+import { createDelivery } from '@atob/lib';
+
+// 3. Local imports (absolute paths)
+import { Button } from '$lib/components/ui/button';
+import { formatDate } from '$lib/utils';
+
+// 4. Types
+import type { Delivery } from '$lib/types';
+```
+
+## Security Best Practices
+
+### Input Validation
+- Validate all user inputs with Zod schemas
+- Sanitize HTML content (use DOMPurify)
+- Validate Nostr events before processing
+- Check bounds on array access
+
+### Authentication
+- Never store private keys in plaintext
+- Use secure session management
+- Implement proper access controls
+- Validate signatures on Nostr events
+
+### Data Privacy
+- Minimize data collection
+- Respect user privacy preferences
+- Use encryption for sensitive data
+- Follow Nostr privacy best practices
+
+## Git Workflow
+
+### Commits
+- Write clear, descriptive commit messages
+- Use conventional commits format when possible
+- Keep commits focused and atomic
+- Include context for complex changes
+
+### Branches
+- Use feature branches for new work
+- Keep main branch stable and deployable
+- Review code before merging
+- Clean up merged branches
+
+## Documentation
+
+### Code Comments
+- Document complex business logic
+- Explain non-obvious decisions
+- Add JSDoc for public APIs
+- Keep comments up to date with code
+
+### README Files
+- Include setup instructions
+- Document environment variables
+- Provide usage examples
+- Keep dependencies updated
+
+## Build and Development
+
+### Bun Usage
+- Use Bun for package management and running scripts
+- Leverage Bun's speed for builds
+- Use `bun run` for scripts
+- Keep Bun version updated
+
+### Development Workflow
+1. Build `@atob/lib` after changes: `cd packages/lib && bun run build`
+2. Run web dev server: `cd packages/web && bun run dev`
+3. Format code: `bun run format` (uses Prettier)
+4. Type check: `bun run check`
+
+### Build Process
+- Ensure `@atob/lib` is built before building web
+- Generate TypeScript declarations for library
+- Optimize production builds
+- Test builds before deployment
+
+---
+
+## Quick Reference
+
+### Common Patterns
+
+**Reactive Component State:**
+```svelte
+<script lang="ts">
+  let count = $state(0);
+  let doubled = $derived(count * 2);
+</script>
+```
+
+**Shared State (.svelte.ts):**
+```typescript
+export const createStore = () => {
+  let value = $state(0);
+  return {
+    get value() { return value; },
+    set value(v: number) { value = v; }
+  };
+};
+```
+
+**Nostr Event Validation:**
+```typescript
+const validated = eventSchema.safeParse(event);
+if (!validated.success) {
+  throw new Error('Invalid event');
+}
+```
+
+**State Machine with Svelte:**
+```typescript
+const actor = createActor(machine);
+actor.start();
+
+let state = $state(actor.getSnapshot());
+actor.subscribe((snapshot) => {
+  state = snapshot;
+});
+```
+
+Remember: Write code that is easy to understand, maintain, and test. When in doubt, favor clarity over cleverness.
+
+Default to using Bun instead of Node.js.
+
+Use bun <file> instead of node <file> or ts-node <file>
+Use bun test instead of jest or vitest
+Use bun build <file.html|file.ts|file.css> instead of webpack or esbuild
+Use bun install instead of npm install or yarn install or pnpm install
+Use bun run <script> instead of npm run <script> or yarn run <script> or pnpm run <script>
+Bun automatically loads .env, so don't use dotenv.
+APIs
+Bun.serve() supports WebSockets, HTTPS, and routes. Don't use express.
+bun:sqlite for SQLite. Don't use better-sqlite3.
+Bun.redis for Redis. Don't use ioredis.
+Bun.sql for Postgres. Don't use pg or postgres.js.
+WebSocket is built-in. Don't use ws.
+Prefer Bun.file over node:fs's readFile/writeFile
+Bun.$ls instead of execa.
+Testing
+Use bun test to run tests.
+
+import { test, expect } from "bun:test";
+
+test("hello world", () => {
+  expect(1).toBe(1);
+});
+Frontend
+Use HTML imports with Bun.serve(). Don't use vite. HTML imports fully support React, CSS, Tailwind.
+
+Server:
+
+import index from "./index.html"
+
+Bun.serve({
+  routes: {
+    "/": index,
+    "/api/users/:id": {
+      GET: (req) => {
+        return new Response(JSON.stringify({ id: req.params.id }));
+      },
+    },
+  },
+  // optional websocket support
+  websocket: {
+    open: (ws) => {
+      ws.send("Hello, world!");
+    },
+    message: (ws, message) => {
+      ws.send(message);
+    },
+    close: (ws) => {
+      // handle close
+    }
+  },
+  development: {
+    hmr: true,
+    console: true,
+  }
+})
+HTML files can import .tsx, .jsx or .js files directly and Bun's bundler will transpile & bundle automatically. <link> tags can point to stylesheets and Bun's CSS bundler will bundle.
+
+<html>
+  <body>
+    <h1>Hello, world!</h1>
+    <script type="module" src="./frontend.tsx"></script>
+  </body>
+</html>
+With the following frontend.tsx:
+
+import React from "react";
+
+// import .css files directly and it works
+import './index.css';
+
+import { createRoot } from "react-dom/client";
+
+const root = createRoot(document.body);
+
+export default function Frontend() {
+  return <h1>Hello, world!</h1>;
+}
+
+root.render(<Frontend />);
+Then, run index.ts
+
+bun --hot ./index.ts
+For more information, read the Bun API docs in node_modules/bun-types/docs/**.md.
+

@@ -1,0 +1,256 @@
+# Data Loading Patterns in AtoB Web App
+
+This document describes the patterns and architecture used for loading data in the AtoB web application, including the role of loaders, the event store, and real-time subscriptions.
+
+## Overview
+
+The AtoB web app uses a layered approach to data management that separates concerns between fetching events from Nostr relays and managing the already fetched events in memory. This architecture ensures efficient data loading, real-time updates, and consistent state management across the application.
+
+## Core Concepts
+
+### 1. Event Store
+
+The **event store** is the central repository that maintains all fetched Nostr events in memory. It acts as a client-side cache and provides reactive access to events.
+
+**Key Characteristics:**
+
+- Maintains a collection of all fetched events
+- Provides reactive queries that update when new events are added
+- Serves as the single source of truth for event data
+- Automatically deduplicates events based on their IDs
+
+**Usage:**
+
+```typescript
+import { eventStore } from '$lib/services/eventStore';
+
+// Get a single event
+const event = eventStore.event(eventId);
+
+// Get a timeline of events matching a filter
+const timeline = eventStore.timeline(filter);
+
+// Use with models for typed data
+const deliveries = eventStore.model(TimelineModel, deliveriesFilter);
+```
+
+### 2. Loaders
+
+**Loaders** are responsible for fetching events from Nostr relays and populating the event store. They handle the communication with relays and ensure events are properly stored.
+
+**Key Characteristics:**
+
+- Fetch events from relays based on filters
+- Automatically store fetched events in the event store
+- Handle pagination and relay selection
+- Provide subscription-based updates
+
+**Primary Loader Function:**
+
+```typescript
+// The main loader function used throughout the app
+const loader = createTimelineLoaderByFilter(filter).subscribe();
+```
+
+### 3. Filter Constants
+
+Filter constants define reusable Nostr filters for common use cases. They centralize filter logic and ensure consistency across the application.
+
+**Available Filters:**
+
+```typescript
+// Public deliveries (state machine definitions)
+export const deliveriesFilter: Filter = {
+	kinds: [stateMachineDefinitionKind]
+};
+
+// User-specific deliveries (state machine snapshots)
+export const userDeliveriesFilter = (pubkey: string): Filter => ({
+	kinds: [stateMachineSnapshotKind],
+	authors: [pubkey]
+});
+
+// Single delivery by ID
+export const singleDeliveryFilter = (id: string): Filter => ({
+	ids: [id]
+});
+
+// Transition events for a delivery
+export const transitionEventsFilter = (deliveryId: string): Filter => ({
+	kinds: [stateMachineTransitionKind],
+	'#e': [deliveryId]
+});
+
+// State snapshot for a specific delivery
+export const stateSnapshotFilter = (kind: number, pubkey: string, identifier: string): Filter => ({
+	kinds: [kind],
+	authors: [pubkey],
+	'#d': [identifier]
+});
+```
+
+## Data Loading Patterns
+
+### Pattern 1: Timeline Loading with Event Store
+
+Use this pattern for loading collections of events that need to be displayed as a timeline or list.
+
+**When to use:**
+
+- Loading public deliveries on the home page
+- Loading user-specific deliveries
+- Loading any collection of events
+
+**Implementation:**
+
+```typescript
+import { createTimelineLoaderByFilter, deliveriesFilter } from '$lib/services/loaders.svelte';
+import { eventStore } from '$lib/services/eventStore';
+import { TimelineModel } from 'applesauce-core/models';
+
+// Create reactive timeline using event store
+const deliveries = eventStore.model(TimelineModel, deliveriesFilter);
+
+// Set up loader to fetch events
+$effect(() => {
+	const sub = createTimelineLoaderByFilter(deliveriesFilter).subscribe();
+	return () => sub.unsubscribe();
+});
+```
+
+### Pattern 2: Real-time Subscriptions
+
+Use this pattern for components that need to receive real-time updates as new events are published.
+
+**When to use:**
+
+- Transition events that need immediate updates
+- State snapshots that change frequently
+- Any component requiring live data
+
+**Implementation:**
+
+```typescript
+import { relayPool } from '$lib/services/relay-pool';
+import { transitionEventsFilter } from '$lib/services/loaders.svelte';
+import { relayStore } from '$lib/stores/relay-store.svelte';
+
+$effect(() => {
+	const sub = relayPool
+		.subscription(relayStore.selectedRelays, transitionEventsFilter(deliveryId))
+		.subscribe({
+			next: (event) => {
+				if (event && event !== 'EOSE') {
+					// Handle new events
+					updateLocalState(event);
+				}
+			}
+		});
+
+	return () => sub.unsubscribe();
+});
+```
+
+### Pattern 3: Single Event Loading
+
+Use this pattern for loading individual events by ID.
+
+**When to use:**
+
+- Loading a specific delivery details
+- Loading a single state snapshot
+- Any scenario where you need one specific event
+
+**Implementation:**
+
+```typescript
+import { createTimelineLoaderByFilter, singleDeliveryFilter } from '$lib/services/loaders.svelte';
+import { eventStore } from '$lib/services/eventStore';
+import { DeliveryModel } from '$lib/models/delivery';
+
+// Get the event from the event store
+const delivery = eventStore.model(DeliveryModel, deliveryId);
+
+// Load the event if not already in store
+$effect(() => {
+	if (!deliveryId || $delivery) return;
+	const sub = createTimelineLoaderByFilter(singleDeliveryFilter(deliveryId)).subscribe();
+	return () => sub.unsubscribe();
+});
+```
+
+## Best Practices
+
+### 1. Separation of Concerns
+
+- **Loaders** handle fetching from relays
+- **Event Store** manages cached events
+- **Components** consume data from the event store
+
+### 2. Subscription Management
+
+Always clean up subscriptions to prevent memory leaks:
+
+```typescript
+$effect(() => {
+	const sub = createLoader().subscribe();
+	return () => sub.unsubscribe(); // Important!
+});
+```
+
+### 3. Filter Reusability
+
+Use the predefined filter constants instead of creating inline filters:
+
+```typescript
+// Good
+createTimelineLoaderByFilter(userDeliveriesFilter(pubkey));
+
+// Avoid
+createTimelineLoaderByFilter({
+	kinds: [stateMachineSnapshotKind],
+	authors: [pubkey]
+});
+```
+
+## Examples in the Codebase
+
+### Home Page (`+page.svelte`)
+
+```typescript
+// Uses timeline loading pattern
+const deliveries = eventStore.model(TimelineModel, deliveriesFilter);
+$effect(() => {
+	const sub = createTimelineLoaderByFilter(deliveriesFilter).subscribe();
+	return () => sub.unsubscribe();
+});
+```
+
+### Delivery Details (`deliveries/[id]/+page.svelte`)
+
+```typescript
+// Uses single event loading pattern
+const delivery = eventStore.model(DeliveryModel, id!);
+$effect(() => {
+	const sub = createTimelineLoaderByFilter(singleDeliveryFilter(id)).subscribe();
+	return () => sub.unsubscribe();
+});
+```
+
+### Transition Events Component (`TransitionEvents.svelte`)
+
+```typescript
+// Uses real-time subscription pattern
+const sub = relayPool
+	.subscription(relayStore.selectedRelays, transitionEventsFilter(delivery.id), {
+		id: `transition-events-${delivery.id}`,
+		retries: 3
+	})
+	.subscribe({
+		next: (event) => {
+			if (event && event !== 'EOSE') {
+				// Handle real-time updates
+			}
+		}
+	});
+```
